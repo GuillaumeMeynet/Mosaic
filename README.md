@@ -1,2 +1,2 @@
 # Mosaic
-From a collection of pictures, create an unique picture made from them.
+From a collection of images, create an unique picture made from them.
