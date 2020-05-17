@@ -7,9 +7,11 @@ import os
 
 class Gatherer():
 
-    def __init__(self, name, model, segmentSize):
+    def __init__(self, name, model, segmentSize, pixelSize):
         self.name = name
         self.segmentSize = segmentSize
+        self.pixelSize = pixelSize
+        self.imageFolder = "../Catalogue/Images/"
         self.folder = "../Catalogue/Images/" + name + "/"
         rootPath = Path(self.folder)
         self.model = model
@@ -20,7 +22,7 @@ class Gatherer():
     def initFolder(self):
         originalPath = Path(self.folder + "/Originals/")
         print(str(originalPath))
-        croppedPath = Path(self.folder + "/300px/")
+        croppedPath = Path(self.folder + "/Resized/")
 
         # create folder if doesn't exist
         if not originalPath.exists():
@@ -88,9 +90,9 @@ class Gatherer():
         blue = []
         green = []
         jsonImage["RGB"] = []
-        for raw in range(y, size, scale):
-            for column in range(x, size, scale):
-                rgbValues = rgb_im.getpixel((raw, column))
+        for raw in range(y, y + size, scale):
+            for column in range(x, x + size, scale):
+                rgbValues = rgb_im.getpixel((column, raw))
                 red.append(rgbValues[0])
                 blue.append(rgbValues[1])
                 green.append(rgbValues[2])
@@ -105,21 +107,22 @@ class Gatherer():
 
         # resize image to fit pixelSize x pixelSize cutting
         if deltaWidth % 2:
-            rgb_image = rgb_image.crop((deltaWidth/2 + 1, 0, image.size[0] - deltaWidth/2, image.size[1]))
+            rgb_image = rgb_image.crop((int(deltaWidth/2) + 1, 0, rgb_image.size[0] - int(deltaWidth/2), rgb_image.size[1]))
+            print("new:", rgb_image.size[0])
         else:
-            rgb_image = rgb_image.crop((deltaWidth/2, 0, image.size[0] - deltaWidth/2, image.size[1]))
+            rgb_image = rgb_image.crop((deltaWidth/2, 0, rgb_image.size[0] - deltaWidth/2, rgb_image.size[1]))
         if deltaHeight % 2:
-            rgb_image = rgb_image.crop((0, deltaHeight/2 + 1, image.size[0], image.size[1] - deltaHeight/2))
+            rgb_image = rgb_image.crop((0, int(deltaHeight/2) + 1, rgb_image.size[0], rgb_image.size[1] - int(deltaHeight/2)))
         else:
-            rgb_image = rgb_image.crop((0, deltaHeight/2, image.size[0], image.size[1] - deltaHeight/2))
+            rgb_image = rgb_image.crop((0, deltaHeight/2, rgb_image.size[0], rgb_image.size[1] - deltaHeight/2))
 
         return rgb_image
 
 
 
     def smallColorDetector(self):
-        imagesPath = Path(self.folder + "/300px/")
-        ImagesInfoPath = Path(self.folder + "/ImagesInfo/")
+        imagesPath = Path(self.folder + "/Resized/")
+        ImagesInfoPath = Path(self.imageFolder + "/imagesInfo/")
         if not ImagesInfoPath.exists():
             print("Creating " + str(ImagesInfoPath) + "...")
             ImagesInfoPath.mkdir()
@@ -128,11 +131,11 @@ class Gatherer():
         imagesInfoJson = json.loads('[]') # gloal JSON
 
 
-        for image in imageList:
+        for image in imagesList:
             im = Image.open(image)
             rgb_im = im.convert('RGB')
             imageInfoJson = json.loads('{}') # focus JSON
-            imageInfoJson[str(image.stem)] = str(colorDetector(rgb_im, rgbjson.loads('{}'), 5))
+            imageInfoJson[str(image.stem) + ".png"] = str(self.colorDetector(rgb_im, json.loads('{}'), 5))
             imagesInfoJson.append(imageInfoJson)
 
         # JSON at this point : [{'image1': {'RGB': ['255', '0', '0']}},
@@ -143,8 +146,8 @@ class Gatherer():
             json.dump(imagesInfoJson, outfile)
 
     def modelColorDetector(self):
-        modelPath = Path(self.folder + "/models/")
-        ImagesInfoPath = Path(self.folder + "/ImagesInfo/models/")
+        modelPath = Path(self.imageFolder + "/models/")
+        ImagesInfoPath = Path(self.imageFolder + "/imagesInfo/")
 
         if not ImagesInfoPath.exists():
             print("Creating " + str(ImagesInfoPath) + "...")
@@ -152,24 +155,25 @@ class Gatherer():
         if not modelPath.exists():
             print("Creating " + str(modelPath) + "...")
             modelPath.mkdir()
-        modelImagePath = Path(self.folder + "/models/" + self.model + ".png")
+        modelImagePath = Path(self.imageFolder + "/models/" + self.model + ".png")
         try:
             if not modelImagePath.is_file():
                 raise ValueError("The model image does not exist, exiting...")
         except ValueError:
             exit(str(ValueError))
 
-        pixelSize = 20
-        image = Image.open(modelPath)
-        rgb_image = resizeMiddle(image.convert('RGB'), pixelSize)
+        pixelSize = self.pixelSize
+        image = Image.open(modelImagePath)
+        rgb_image = self.resizeMiddle(image.convert('RGB'), pixelSize)
         jsonImages = json.loads('[]') # global JSON
         rawNbr = 1
-        for raw in range(1, rgb_image.size[1], pixelSize):
+        for raw in range(0, rgb_image.size[1], pixelSize):
             jsonRaw = json.loads('{}')
-            jsonRaw[str("raw" + rawNbr)] = []
-            for column in range(1, rgb_image.size[0], pixelSize):
-                jsonRaw[str("raw" + rawNbr)].append(colorDetector(rgb_image, json.loads('{}'), 2, pixelSize, column, raw))
-            i+=1
+            jsonRaw["raw" + str(rawNbr)] = []
+            for column in range(0, rgb_image.size[0], pixelSize):
+                jsonRaw["raw" + str(rawNbr)].append(self.colorDetector(rgb_image, json.loads('{}'), 2, pixelSize, column, raw))
+            rawNbr+=1
             jsonImages.append(jsonRaw) # append each raw in the global JSON
-        with open(str(ImagesInfoPath) + "/" + image.stem + ".json", "w") as outfile:
+
+        with open(str(ImagesInfoPath) + "/" + self.model + ".json", "w") as outfile:
             json.dump(jsonImages, outfile)
