@@ -4,7 +4,6 @@ from PIL import Image
 import json
 import ast
 import progressbar
-from time import sleep
 
 class Builder():
 
@@ -16,7 +15,7 @@ class Builder():
         self.modelFolder = "../Catalogue/Images/models/"
         self.folder300px = "../Catalogue/Images/" + name + "/Resized/"
         self.imagesFolder = "../Catalogue/Images/"
-        self.outputFolder = "../Output/" + model + "/"
+        self.outputFolder = "../Output/"
 
     def colorComparator(self, color1, color2):
         red = ((255 - abs(int(color1[0])-(int(color2[0]))))/255)*100
@@ -28,9 +27,6 @@ class Builder():
 
         # creating paths
         outputPath = Path(self.outputFolder)
-        if not outputPath.exists():
-            print("Creating " + str(self.outputFolder) + "...")
-            outputPath.mkdir()
         imagesInfoPath = Path(self.imagesInfoFolder + self.name + ".json")
         modelPath = Path(self.modelFolder + self.model + "/")
         modelInfoPath = Path(self.imagesInfoFolder + self.model + ".json")
@@ -77,9 +73,7 @@ class Builder():
         bar.finish()
         print("Saving output image... Please wait.")
         outputImage.save(self.outputFolder + str(self.model) + ".png")
-        sleep(5)
         print("Process finished! Please go to output folder, file name is: " + str(self.model) + ".png")
-        outputImage.show()
 
 
 

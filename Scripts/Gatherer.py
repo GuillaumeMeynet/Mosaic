@@ -4,6 +4,7 @@ from PIL import Image
 import json
 import statistics
 import os
+import sys
 
 class Gatherer():
 
@@ -34,34 +35,38 @@ class Gatherer():
             croppedPath.mkdir()
 
         # check if directory is empty
-        try:
-            if not list(originalPath.glob('*')):
-                raise ValueError("The directory is empty or has just been created.")
-        except ValueError:
-            exit(str(ValueError))
+        if not list(originalPath.glob('*')):
+            sys.exit("The directory is empty or has just been created.")
+        # try:
+        #     if not list(originalPath.glob('*')):
+        #         raise ValueError("The directory is empty or has just been created.")
+        # except ValueError:
+        #     exit(str(ValueError))
 
         # get a list of all JPG and convert them to PNG
         jpgList = list(originalPath.glob('*.jpg'))
         if(jpgList != []):
             for jpg in jpgList:
-                image = Image.open(str(jpg))
-                print("saving " + jpg.stem + ".png !")
-                image.save(str(originalPath) + "/" + jpg.stem + ".png")
-                print("deleting " + jpg.stem + ".jpg !")
-                os.remove(jpg)
+                self.convertJpgPng(jpg, originalPath)
 
         # resize all images to widthSize x heightSize px
         pngList = list(originalPath.glob('*.png'))
         widthSize = heightSize = self.segmentSize
         for png in pngList:
-            print("cropping " + png.stem + " to " + str(self.segmentSize) + " px...")
-            resizedImage = self.cropImage(png, widthSize, heightSize)
-
+            image = Image.open(png)
+            if image.size[0] != widthSize and image.size[1] != heightSize:
+                print("cropping " + png.stem + " to " + str(self.segmentSize) + " px...")
+                resizedImage = self.cropImage(image, widthSize, heightSize)
             # the image now has a resolution of self.segmentSize x self.segmentSize px
             resizedImage.save(str(croppedPath) + "/" + png.stem + ".png")
+    def convertJpgPng(self, jpg, path):
+        image = Image.open(str(jpg))
+        print("saving " + jpg.stem + ".png !")
+        image.save(str(path) + "/" + jpg.stem + ".png")
+        print("deleting " + jpg.stem + ".jpg !")
+        os.remove(jpg)
 
-    def cropImage(self, png, widthSize, heightSize):
-        image = Image.open(png)
+    def cropImage(self, image, widthSize, heightSize):
         resizedImage = None
         if (image.size[0] > image.size[1]):
             heightPercent = heightSize/image.size[1]
@@ -155,12 +160,13 @@ class Gatherer():
         if not modelPath.exists():
             print("Creating " + str(modelPath) + "...")
             modelPath.mkdir()
-        modelImagePath = Path(self.imageFolder + "/models/" + self.model + ".png")
-        try:
-            if not modelImagePath.is_file():
-                raise ValueError("The model image does not exist, exiting...")
-        except ValueError:
-            exit(str(ValueError))
+        modelJpgPath = Path(str(modelPath) + "/" + self.model + '.jpg')
+        if modelJpgPath.is_file():
+            self.convertJpgPng(modelJpgPath, modelPath)
+        modelImagePath = Path(str(modelPath) + "/" + self.model + ".png")
+        print(modelJpgPath)
+        if not modelImagePath.is_file():
+            sys.exit("The model image does not exist, exiting...")
 
         pixelSize = self.pixelSize
         image = Image.open(modelImagePath)
