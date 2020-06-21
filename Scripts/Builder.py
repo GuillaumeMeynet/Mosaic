@@ -11,10 +11,10 @@ class Builder():
         self.model = model
         self.segmentSize = segmentSize
         self.name = name
-        self.imagesInfoFolder = "../Catalogue/Images/imagesInfo/"
-        self.modelFolder = "../Catalogue/Images/models/"
-        self.folder300px = "../Catalogue/Images/" + name + "/Resized/"
-        self.imagesFolder = "../Catalogue/Images/"
+        self.imagesInfoFolder = "../Images/imagesInfo/"
+        self.modelFolder = "../Images/models/"
+        self.folder300px = "../Images/" + name + "/Resized/"
+        self.imagesFolder = "../Images/"
         self.outputFolder = "../Output/"
 
     def colorComparator(self, color1, color2):

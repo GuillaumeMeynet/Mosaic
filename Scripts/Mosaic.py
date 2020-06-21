@@ -15,7 +15,7 @@ def main():
     model = initModel()
 
     name = "Kaamelott"
-    if (model == ""): model = "kaamelott-alexandre-astier"
+    if (model == ""): model = "kaamlott2"
     segmentSize = 40
     grain = 4
 
@@ -39,7 +39,7 @@ def main():
     BuilderClass.outputImageBuilder()
 
 def initModel():
-    imageFolder = "../Catalogue/Images/"
+    imageFolder = "../Images/"
     root = Tk()
     root.withdraw()
     root.update()

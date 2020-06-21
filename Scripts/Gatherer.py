@@ -12,36 +12,39 @@ class Gatherer():
         self.name = name
         self.segmentSize = segmentSize
         self.pixelSize = pixelSize
-        self.imageFolder = "../Catalogue/Images/"
-        self.folder = "../Catalogue/Images/" + name + "/"
-        rootPath = Path(self.folder)
+        self.imageFolder = "../Images/"
+        self.folder = "../Images/" + name + "/"
         self.model = model
-        if not rootPath.exists():
-            print("Creating " + str(self.folder) + "...")
-            rootPath.mkdir()
 
     def initFolder(self):
-        originalPath = Path(self.folder + "/Originals/")
-        print(str(originalPath))
-        croppedPath = Path(self.folder + "/Resized/")
+
+        #create images folder if doesn't exists
+        imagesPath = Path(self.imageFolder)
+        if not imagesPath.exists():
+            print("Creating " + str(originalPath) + "...")
+            originalPath.mkdir()
+
+        #create images name folder if doesn't exists
+        imagesNamePath = Path(self.folder)
+        if not imagesNamePath.exists():
+            print("Creating " + str(imagesNamePath) + "...")
+            imagesNamePath.mkdir()
 
         # create folder if doesn't exist
+        originalPath = Path(self.folder + "/Originals/")
         if not originalPath.exists():
             print("Creating " + str(originalPath) + "...")
             originalPath.mkdir()
 
-        if not croppedPath.exists():
-            print("Creating " + str(croppedPath) + "...")
-            croppedPath.mkdir()
+        # create cropped folder if doesn't exist
+        resizedPath = Path(self.folder + "/Resized/")
+        if not resizedPath.exists():
+            print("Creating " + str(resizedPath) + "...")
+            resizedPath.mkdir()
 
         # check if directory is empty
         if not list(originalPath.glob('*')):
-            sys.exit("The directory is empty or has just been created.")
-        # try:
-        #     if not list(originalPath.glob('*')):
-        #         raise ValueError("The directory is empty or has just been created.")
-        # except ValueError:
-        #     exit(str(ValueError))
+            sys.exit("The directory " + str(self.name) + " is empty or has just been created. Please fill it will pictures.")
 
         # get a list of all JPG and convert them to PNG
         jpgList = list(originalPath.glob('*.jpg'))
@@ -58,7 +61,7 @@ class Gatherer():
                 print("cropping " + png.stem + " to " + str(self.segmentSize) + " px...")
                 resizedImage = self.cropImage(image, widthSize, heightSize)
             # the image now has a resolution of self.segmentSize x self.segmentSize px
-            resizedImage.save(str(croppedPath) + "/" + png.stem + ".png")
+            resizedImage.save(str(resizedPath) + "/" + png.stem + ".png")
     def convertJpgPng(self, jpg, path):
         image = Image.open(str(jpg))
         print("saving " + jpg.stem + ".png !")
@@ -166,6 +169,7 @@ class Gatherer():
         modelImagePath = Path(str(modelPath) + "/" + self.model + ".png")
         print(modelJpgPath)
         if not modelImagePath.is_file():
+            print(modelImagePath)
             sys.exit("The model image does not exist, exiting...")
 
         pixelSize = self.pixelSize
